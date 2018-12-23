@@ -30,6 +30,20 @@ services:
         aliases:
           - local.swagger.apisprout
 
+  swagger-validator:
+    image: swaggerapi/swagger-validator
+    container_name: "swagger-validator"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./swagger/openapi.json:/openapi.json
+    environment:
+      SWAGGER_JSON: /openapi.json
+      ## Note if you configure the SWAGGER_BASE_PATH, this path will change. 
+      ## For example, /validator will be accessible at http://localhost/validator?url=...
+      # SWAGGER_BASE_PATH: /validator
+      # API_URL: ""
+
   swagger-nginx:
     image: nginx:mainline-alpine
     container_name: "swagger-nginx"
@@ -44,4 +58,4 @@ services:
 
 networks:
   swagger_link:
-    external: true
+#    external: true
