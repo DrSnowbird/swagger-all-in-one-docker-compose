@@ -1,7 +1,12 @@
 # swagger-all-in-one-docker-container
-(Base text from upstream - but changed here!)
+(Some texts are from upstream - but they mostly are changed here!)
 # Overview
-I docker composed Swagger Editor, Swagger UI, Swagger mock api server(openapi: 3.x) and nginx to handle them more easily.
+This is all-in-one Swagger tool set of dockers using docker-compose.
+- Swagger Editor, 
+- Swagger UI, 
+- Swagger Validator,
+- Swagger mock api server(openapi: 3.x), and
+- nginx to handle them more easily.
 If you want to write swagger spec as `swagger: "2.0"`, use `swagger2.0` branch.
 There is a sample swagger spec in this so the Editor, UI and the mock API server will run without any configuration from the start.
 All you need to do is edit the swagger spec, save as openapi.json, and restart docker. Voila, UI and the mock API server are updated.
@@ -11,7 +16,7 @@ All you need to do is edit the swagger spec, save as openapi.json, and restart d
 docker-compose up -d
 docker ps
 ```
-It will look like this.
+Here are the list of dockers created by docker-compose (yours might look a bit differently):
 ```
          Name                       Command               State           Ports
 ----------------------------------------------------------------------------------------
