@@ -18,52 +18,51 @@ version: "3.3"
 # See: https://docs.docker.com/engine/userguide/networking/dockernetworks/
 # See: https://docs.docker.com/engine/reference/commandline/network_create/
 networks:
-# restheart-backend:
+  restheart-backend:
   swagger_link:
-#    external: true
+    # external: true
        
 ### Create a permanent, named data volume
 # This makes much easier to identify where the mongodb data is stored on host
 # See: https://docs.docker.com/engine/userguide/containers/dockervolumes/#mount-a-shared-storage-volume-as-a-data-volume
 volumes:
-  restheart-datadb:
+  restheart-data-db:
 
 services:
 
-  restheart:
+  restheart-docker:
     image: softinstigate/restheart
-    container_name: restheart
+    container_name: restheart-docker
     depends_on:
       - mongodb
     networks:
-      #- restheart-backend
-      - swagger_link
+      - restheart-backend
     ports:
-      - "8080:8080"
+      - "38080:8080"
     ## -- Uncoment below if you want to mount a local configuration folder
     ## -- to overwrite default restheart.yml and/or security.yml
-#    volumes:
-#      - ./etc:/opt/restheart/etc:ro
+    volumes:
+      - ./etc:/opt/restheart/etc:ro
 
   mongodb:
-    image: mongo:3.6
-    container_name: mongodb
+    image: mongo:latest
+    container_name: restheart-mongodb
+    command: --bind_ip_all --auth
+    # command: --bind_ip_all --auth --smallfiles
+    restart: always
     environment:
       # Be sure this credentials match with those in etc/restheart.yml
       # $ mongo --username restheart --password R3ste4rt! --authenticationDatabase admin
       # These aren't needed if connecting to an existing database instance
       MONGO_INITDB_ROOT_USERNAME: restheart
       MONGO_INITDB_ROOT_PASSWORD: R3ste4rt!
-    command: --bind_ip_all --auth
     volumes:
-      - restheart-datadb:/data/db
-    networks:
-      - swagger_link
+      - restheart-data-db:/data/db
     ## -- Uncoment below if you want to map mongodb port
     ports:
-      - "27017:27017"
+      - "37017:27017"
 
-  mongo-gui-docker:
+  mongo-compass-docker:
     image: openkbs/mongo-gui-docker
     command: /usr/bin/mongodb-compass
     build:
@@ -71,38 +70,46 @@ services:
       dockerfile: Dockerfile
       args:
         buildno: 1
-    container_name: mongo-gui-docker
+    container_name: mongo-compass-docker
     environment:
       - USER_ID=${USER_ID:-1000}
       - GROUP_ID=${GROUP_ID:-1000}
-    env_file:
-      - ./docker-compose.env
+#    env_file:
+#      - ./docker-compose.env
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ./workspace:/home/developer/workspace
+    depends_on:
+      - mongodb
       
   swagger-editor:
     image: swaggerapi/swagger-editor
     container_name: "swagger-editor"
     ports:
-      - "8081:8080"
-
+      - "38081:8080"
+    networks:
+      swagger_link:
+        aliases:
+          - local.swagger.editor
   swagger-ui:
     image: swaggerapi/swagger-ui
     container_name: "swagger-ui"
     ports:
-      - "8082:8080"
+      - "38082:8080"
     volumes:
       - ./swagger/openapi.json:/openapi.json
     environment:
       SWAGGER_JSON: /openapi.json
-#      API_URL: ""
-
+      API_URL: "http://generator.swagger.io/api/swagger.json"
+    networks:
+      swagger_link:
+        aliases:
+          - local.swagger.ui
   swagger-api:
     image: danielgtaylor/apisprout
     container_name: "swagger-api"
     ports:
-      - "8083:8000"
+      - "38083:8000"
     volumes:
       - ./swagger/openapi.json:/openapi.json
     command: /openapi.json
@@ -115,7 +122,7 @@ services:
     image: nginx:mainline-alpine
     container_name: "swagger-nginx"
     ports:
-      - "8084:8084"
+      - "38084:8084"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     networks:
@@ -127,14 +134,16 @@ services:
     image: swaggerapi/swagger-validator
     container_name: "swagger-validator"
     ports:
-      - "8085:8080"
+      - "38085:8080"
     volumes:
       - ./swagger/openapi.json:/openapi.json
     environment:
       SWAGGER_JSON: /openapi.json
       ## -- Note if you configure the SWAGGER_BASE_PATH, this path will change. 
       ## -- For example, /validator will be accessible at http://localhost/validator?url=...
-#      SWAGGER_BASE_PATH: /validator
-#      API_URL: ""
-
-
+      SWAGGER_BASE_PATH: /validator
+      API_URL: "http://generator.swagger.io/api/swagger.json"
+    networks:
+      swagger_link:
+        aliases:
+          - local.swagger.validator

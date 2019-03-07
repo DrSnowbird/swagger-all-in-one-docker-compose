@@ -18,13 +18,16 @@ docker ps
 ```
 Here are the list of dockers created by docker-compose (yours might look a bit differently):
 ```
-         Name                       Command               State           Ports
-----------------------------------------------------------------------------------------
-swaggerapi/swagger-validator     "bash /validator/run…"    4 hours ago    0.0.0.0:8080->8080/tcp           swagger-validator
-swaggerapi/swagger-ui            "sh /usr/share/nginx…"    4 hours ago    80/tcp, 0.0.0.0:8082->8080/tcp   swagger-ui
-danielgtaylor/apisprout          "/usr/local/bin/apis…"    4 hours ago    0.0.0.0:8083->8000/tcp           swagger-api
-nginx:mainline-alpine            "nginx -g 'daemon of…"    4 hours ago    80/tcp, 0.0.0.0:8084->8084/tcp   swagger-nginx
-swaggerapi/swagger-editor        "sh /usr/share/nginx…"    4 hours ago    0.0.0.0:8081->8080/tcp           swagger-editor
+    Name	            Stack	                            Image	                        Published Ports
+-----------------------------------------------------------------------------------------------------------
+   mongo-compass-docker	swagger-all-in-one-docker-compose	openkbs/mongo-gui-docker
+   restheart-docker	    swagger-all-in-one-docker-compose	softinstigate/restheart	        38080:8080
+   restheart-mongodb	swagger-all-in-one-docker-compose	mongo:latest	                37017:27017
+   swagger-ui	        swagger-all-in-one-docker-compose	swaggerapi/swagger-ui	        38082:8080
+   swagger-api	        swagger-all-in-one-docker-compose	danielgtaylor/apisprout	        38083:8000
+   swagger-editor	    swagger-all-in-one-docker-compose	swaggerapi/swagger-editor	    38081:8080
+   swagger-validator	swagger-all-in-one-docker-compose	swaggerapi/swagger-validator    38085:8080
+   swagger-nginx	    swagger-all-in-one-docker-compose	nginx:mainline-alpine	        38084:8084
 ```
 
 # Use
@@ -33,6 +36,19 @@ swaggerapi/swagger-editor        "sh /usr/share/nginx…"    4 hours ago    0.0.
 3. Move and save the json file as `swagger/openapi.json`
 4. Execute `docker-compose restart` and swagger-ui and swagger-api(mock server) will be updated
 5. If you want to read an external openapi.json file, import the file from swagger-editor `File > Import File` menu.
+6. Restheart login: 
+```
+    (default from etc/scurity.yml)
+    user1/changeit
+    user2/changeit
+    admin/changeit
+```
+7. For Mongodb Compass to connect to Mongodo - Use the following unless you change the default setup:
+```
+Host: <Host_Ip>
+Port: 37017
+Authentication: restheart/R3ste4rt!
+```
 
 ## Troubleshooting / Heads-up
 - When the UI is referenced as `http://localhost:8082/`, cache might be used even the changes are made in swagger files. So it may be better to refference as `http://127.0.0.1:8082/`(api, too.)
@@ -40,12 +56,20 @@ swaggerapi/swagger-editor        "sh /usr/share/nginx…"    4 hours ago    0.0.
 - If you want to access swagger-api from other domains(CORS), access swagger-api through swagger-nginx.
 
 # swagger-editor
+To access, try:
+```
+http://0.0.0.0:38081/
+```
 - Can edit swagger spec
 - Can export swagger spec as json, yaml and etc. swagger-ui can read the files and they can be beautifly referenced as documentation. apisprout can read the yml and json then it can serve the mock API.
 
 # swagger-ui
+To access, try:
+```
+http://0.0.0.0:38082/
+```
 - Can referrence the documentation from swagger spec.
-- swagger spec can be assined from json file path or API_URL path.
+- swagger spec can be assigned from json file path or API_URL path.
 ```
 environment:
   SWAGGER_JSON: /openapi.json
@@ -59,13 +83,16 @@ environment:
 - ./swagger/openapi.json is also refferenced from api in this repository.
 - However, apisprout can not add `Access-Control-Allow-Origin` to Header so I put nginx in front of swagger-api and add it to Header then proxy to swagger-api.(To make it accessable from othe domains. CORS.)
 
-# swagger-nginx
+# swagger-nginx (Proxy service for Swagger-API)
 - Placed to modify Header.
-- Mock API (swagger-api) can be accessed from `8084` port via nginx.
+- Mock API (swagger-api) can be accessed from `38084` port via nginx.
 - Of course, you can use the api from curl, etc.
-
+```
+firefox http://127.0.0.1:38084/pets
+```
+Or, command line:
 ```json
-curl -i -X GET http://127.0.0.1:8084/pets/1 -H "accept: application/json"
+curl -i -X GET http://127.0.0.1:38084/pets/1 -H "accept: application/json"
 
 HTTP/1.1 200 OK
 Server: nginx/1.15.7
@@ -89,8 +116,10 @@ Access-Control-Allow-Credentials: true
 - REST API validation
 * example
 ```
-firefox http://localhost:8080/?url=https://petstore.swagger.io/v2/swagger.json
+firefox http://localhost:38085/validator?url=https://petstore.swagger.io/v2/swagger.json
+firefox http://0.0.0.0:38085/validator?url=http://generator.swagger.io/api/swagger.json
 ```
 # References
+* [Restheart.org](https://restheart.org/)
 * [OpenAPI-Specification](https://github.com/OAI/OpenAPI-Specification/)
 * [OpenAPI-Specification Example in json](https://github.com/OAI/OpenAPI-Specification/tree/master/examples/v2.0/json)
